@@ -3,9 +3,8 @@
 ``databricks bundle validate`` always resolves the current user through
 ``/api/2.0/preview/scim/v2/Me`` before running its schema and interpolation
 checks — even when nothing is deployed. CI has no workspace, so the bundle
-job points the CLI at this stub (via the ``workspace_host`` bundle variable)
-and every GET receives a canned SCIM identity, which is all validate needs
-to complete offline.
+job points ``DATABRICKS_HOST`` at this stub and every GET receives a canned
+SCIM identity, which is all validate needs to complete offline.
 """
 
 from __future__ import annotations

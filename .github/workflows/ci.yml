@@ -79,5 +79,6 @@ jobs:
         run: python3 platform/databricks/ci/workspace_stub.py &
       - name: bundle validate (offline, against the stub)
         env:
+          DATABRICKS_HOST: http://127.0.0.1:8787
           DATABRICKS_TOKEN: ci-placeholder
-        run: databricks bundle validate -t dev --var="workspace_host=http://127.0.0.1:8787"
+        run: databricks bundle validate -t dev
