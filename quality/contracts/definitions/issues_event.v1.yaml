@@ -18,6 +18,18 @@ fields:
     nullable: false
     pii: true
     pii_category: quasi_identifier
+  - name: actor_display_login
+    type: string
+    nullable: true
+    pii: true
+    pii_category: quasi_identifier
+    description: Actor display login; sat_actor_profile source.
+  - name: actor_avatar_url
+    type: string
+    nullable: true
+    pii: true
+    pii_category: quasi_identifier
+    description: Actor avatar URL; sat_actor_profile source.
   - name: repo_name
     type: string
     nullable: false
