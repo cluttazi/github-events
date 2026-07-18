@@ -37,17 +37,19 @@ variables:
     description: Databricks Runtime version for job clusters.
     default: 16.4.x-scala2.13
 
+# No workspace host is pinned here: the CLI forbids variable interpolation in
+# workspace.host, so the host comes from the DATABRICKS_HOST environment
+# variable (or a CLI profile) at deploy time. No real workspace backs this
+# repo; CI points DATABRICKS_HOST at a local stub so `bundle validate` runs
+# offline (see platform/databricks/ci/workspace_stub.py).
 targets:
   dev:
     mode: development
     default: true
-    workspace:
-      host: https://example.cloud.databricks.com
 
   prod:
     mode: production
     workspace:
-      host: https://example.cloud.databricks.com
       root_path: /Workspace/deploy/${bundle.name}/${bundle.target}
     variables:
       lakehouse_root_path: /Volumes/github_events_prod_bronze/ops/lakehouse

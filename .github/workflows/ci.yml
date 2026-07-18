@@ -72,8 +72,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@main
-      - name: bundle validate (offline; no workspace call for schema checks)
+      # `bundle validate` insists on resolving the current user against the
+      # workspace even for pure schema checks, so point it at a local stub
+      # that answers the SCIM call — validation stays fully offline.
+      - name: start offline workspace stub
+        run: python3 platform/databricks/ci/workspace_stub.py &
+      - name: bundle validate (offline, against the stub)
         env:
-          DATABRICKS_HOST: https://example.cloud.databricks.com
+          DATABRICKS_HOST: http://127.0.0.1:8787
           DATABRICKS_TOKEN: ci-placeholder
         run: databricks bundle validate -t dev
