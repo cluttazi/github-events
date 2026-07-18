@@ -18,8 +18,8 @@ jobs:
     name: lint & type-check & generated-artifact drift
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --group dev
@@ -37,12 +37,12 @@ jobs:
     name: pytest (unit + spark integration)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --group dev
@@ -55,7 +55,7 @@ jobs:
     name: terraform fmt & validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.10.5"
@@ -70,7 +70,7 @@ jobs:
     name: databricks asset bundle validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: databricks/setup-cli@main
       # `bundle validate` insists on resolving the current user against the
       # workspace even for pure schema checks, so point it at a local stub
