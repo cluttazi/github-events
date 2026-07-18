@@ -18,15 +18,24 @@ PORT = 8787
 
 class _StubHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
-        body = json.dumps(
-            {
-                "id": "0",
-                "userName": "ci-stub@example.com",
-                "active": True,
-            }
-        ).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/scim+json")
+        # Only the identity endpoint exists; everything else behaves like a
+        # real empty workspace (404), so validate treats bundle paths as
+        # not-yet-deployed instead of misparsing a bogus object.
+        if self.path.split("?")[0].endswith("/scim/v2/Me"):
+            self._reply(
+                200,
+                {"id": "0", "userName": "ci-stub@example.com", "active": True},
+            )
+        else:
+            self._reply(
+                404,
+                {"error_code": "RESOURCE_DOES_NOT_EXIST", "message": "Not found"},
+            )
+
+    def _reply(self, code: int, payload: dict[str, object]) -> None:
+        body = json.dumps(payload).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
