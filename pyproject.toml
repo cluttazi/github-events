@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "github-events-lakehouse"
+version = "0.1.0"
+description = "GitHub events lakehouse: Medallion architecture with Data Vault 2.0 (raw vault, business vault, information marts) on Delta Lake."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+authors = [{ name = "Lucas Luttazi" }]
+dependencies = [
+    # Spark 4.1 + Delta 4.3 are a verified pair: delta-spark 4.3.x requires
+    # pyspark >=4.0.1,<=4.1.1. Java 21 rules out the Spark 3.5 line entirely.
+    "pyspark[sql]==4.1.1",
+    "delta-spark==4.3.1",
+    "faker~=37.0",
+    "pydantic~=2.13",
+    "pyyaml~=6.0",
+]
+
+[project.scripts]
+# Entry points for the Databricks Asset Bundle python_wheel_task definitions
+# (platform/databricks/resources/lakehouse_job.yml). Locally the same modules
+# run via `python -m ...` through the Makefile.
+ghe-bronze = "pipelines.bronze.copy_into:main"
+ghe-raw-vault = "pipelines.raw_vault.job:main"
+ghe-business-vault = "pipelines.business_vault.job:main"
+ghe-gold = "pipelines.gold.job:main"
+ghe-dq = "quality.expectations.runner:main"
+
+[dependency-groups]
+dev = [
+    "pytest~=8.3",
+    "ruff~=0.14.0",
+    "mypy~=1.15",
+    "types-pyyaml~=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "ingestion",
+    "pipelines",
+    "quality",
+    "governance",
+    "observability",
+    "orchestration",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF", "PL"]
+ignore = [
+    "PLR2004", # magic values in tests/thresholds are fine
+]
+
+[tool.ruff.lint.pylint]
+max-args = 7 # keyword-only builders (e.g. vault object specs) legitimately take 6+
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR0913"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+# PySpark's Column/Row APIs leak `Any` through arithmetic and UDF boundaries;
+# warn_return_any would force pointless casts without catching real bugs.
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = ["delta.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "spark: tests that start a local SparkSession (slow, JVM required)",
+    "integration: end-to-end tests over generated data",
+]
+addopts = "-ra"
