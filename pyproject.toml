@@ -31,9 +31,9 @@ ghe-dq = "quality.expectations.runner:main"
 
 [dependency-groups]
 dev = [
-    "pytest~=8.3",
-    "ruff~=0.14.0",
-    "mypy~=1.15",
+    "pytest~=9.1",
+    "ruff~=0.15.22",
+    "mypy~=2.3",
     "types-pyyaml~=6.0",
 ]
 
