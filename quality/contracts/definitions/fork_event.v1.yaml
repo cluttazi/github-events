@@ -1,0 +1,46 @@
+contract: fork_event
+version: 1
+owner: data-platform@github-events.example
+description: >
+  Flattened staged schema for GH-Archive ForkEvent lines. The forkee payload
+  carries a full repo object, making ForkEvent a secondary source of
+  sat_repo_profile (for the fork). Feeds hub_actor, hub_repo,
+  link_actor_repo, and sat_actor_repo_event.
+primary_key: [event_id]
+event_time_field: created_at
+sla:
+  freshness_hours: 24
+fields:
+  - name: event_id
+    type: string
+    nullable: false
+  - name: actor_login
+    type: string
+    nullable: false
+    pii: true
+    pii_category: quasi_identifier
+  - name: repo_name
+    type: string
+    nullable: false
+  - name: created_at
+    type: timestamp
+    nullable: false
+  - name: forkee_full_name
+    type: string
+    nullable: true
+    description: owner/name of the newly created fork.
+  - name: forkee_owner
+    type: string
+    nullable: true
+  - name: forkee_language
+    type: string
+    nullable: true
+  - name: forkee_default_branch
+    type: string
+    nullable: true
+  - name: forkee_license
+    type: string
+    nullable: true
+  - name: forkee_created_at
+    type: timestamp
+    nullable: true

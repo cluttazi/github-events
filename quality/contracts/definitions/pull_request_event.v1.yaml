@@ -1,0 +1,81 @@
+contract: pull_request_event
+version: 1
+owner: data-platform@github-events.example
+description: >
+  Flattened staged schema for GH-Archive PullRequestEvent lines. The only
+  event type that carries a full repo object (payload.pull_request.base.repo),
+  so it is the sole source of sat_repo_profile and sat_repo_stats besides
+  ForkEvent's forkee. Feeds hub_pull_request, link_actor_pull_request, and
+  sat_pull_request_details.
+primary_key: [event_id]
+event_time_field: created_at
+sla:
+  freshness_hours: 24
+fields:
+  - name: event_id
+    type: string
+    nullable: false
+  - name: actor_login
+    type: string
+    nullable: false
+    pii: true
+    pii_category: quasi_identifier
+  - name: repo_name
+    type: string
+    nullable: false
+  - name: created_at
+    type: timestamp
+    nullable: false
+  - name: action
+    type: string
+    nullable: false
+    allowed_values: [opened, closed, reopened]
+  - name: pr_number
+    type: integer
+    nullable: false
+    description: Composite business key of hub_pull_request with repo_name.
+  - name: pr_title
+    type: string
+    nullable: true
+  - name: pr_state
+    type: string
+    nullable: true
+    allowed_values: [open, closed]
+  - name: pr_merged
+    type: boolean
+    nullable: true
+  - name: base_ref
+    type: string
+    nullable: true
+  - name: head_ref
+    type: string
+    nullable: true
+  - name: base_repo_owner
+    type: string
+    nullable: true
+    description: Repo owner login from base.repo; sat_repo_profile source.
+  - name: base_repo_language
+    type: string
+    nullable: true
+  - name: base_repo_default_branch
+    type: string
+    nullable: true
+  - name: base_repo_license
+    type: string
+    nullable: true
+  - name: base_repo_created_at
+    type: timestamp
+    nullable: true
+  - name: base_repo_stargazers
+    type: bigint
+    nullable: true
+    description: Fast-changing counter; sat_repo_stats source.
+  - name: base_repo_forks
+    type: bigint
+    nullable: true
+  - name: base_repo_open_issues
+    type: bigint
+    nullable: true
+  - name: base_repo_watchers
+    type: bigint
+    nullable: true

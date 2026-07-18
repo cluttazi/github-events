@@ -1,0 +1,44 @@
+contract: push_event
+version: 1
+owner: data-platform@github-events.example
+description: >
+  Flattened staged schema for GH-Archive PushEvent lines. Describes the
+  columns raw-vault staging extracts from bronze raw_value — not the nested
+  source JSON. Feeds hub_actor, hub_repo, link_actor_repo, and the
+  multi-active sat_actor_repo_event.
+primary_key: [event_id]
+event_time_field: created_at
+sla:
+  freshness_hours: 24
+fields:
+  - name: event_id
+    type: string
+    nullable: false
+    description: GH event id; subsequence key of the multi-active satellite.
+  - name: actor_login
+    type: string
+    nullable: false
+    pii: true
+    pii_category: quasi_identifier
+    description: Actor business key (hub_actor).
+  - name: repo_name
+    type: string
+    nullable: false
+    description: owner/name repo business key (hub_repo).
+  - name: created_at
+    type: timestamp
+    nullable: false
+  - name: push_id
+    type: bigint
+    nullable: true
+  - name: push_size
+    type: integer
+    nullable: true
+    description: Number of commits in the push.
+  - name: push_distinct_size
+    type: integer
+    nullable: true
+  - name: ref_name
+    type: string
+    nullable: true
+    description: Fully-qualified git ref the push targeted.

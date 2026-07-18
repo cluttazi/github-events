@@ -1,0 +1,38 @@
+contract: release_event
+version: 1
+owner: data-platform@github-events.example
+description: >
+  Flattened staged schema for GH-Archive ReleaseEvent lines. Feeds
+  hub_actor, hub_repo, link_actor_repo, and sat_actor_repo_event only.
+primary_key: [event_id]
+event_time_field: created_at
+sla:
+  freshness_hours: 24
+fields:
+  - name: event_id
+    type: string
+    nullable: false
+  - name: actor_login
+    type: string
+    nullable: false
+    pii: true
+    pii_category: quasi_identifier
+  - name: repo_name
+    type: string
+    nullable: false
+  - name: created_at
+    type: timestamp
+    nullable: false
+  - name: action
+    type: string
+    nullable: false
+    allowed_values: [published]
+  - name: release_tag
+    type: string
+    nullable: true
+  - name: release_name
+    type: string
+    nullable: true
+  - name: release_prerelease
+    type: boolean
+    nullable: true
