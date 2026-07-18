@@ -1,0 +1,9 @@
+table: raw_vault/hub_actor
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_actor]
+  - type: not_null
+    column: hk_actor
+  - type: not_null
+    column: actor_login

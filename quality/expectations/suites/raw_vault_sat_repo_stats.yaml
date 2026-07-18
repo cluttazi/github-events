@@ -1,0 +1,11 @@
+table: raw_vault/sat_repo_stats
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_repo, hash_diff]
+  - type: not_null
+    column: hk_repo
+  - type: not_null
+    column: hash_diff
+  - type: not_null
+    column: record_source

@@ -1,0 +1,13 @@
+table: gold/repo_activity_mart
+layer: gold
+checks:
+  - type: unique
+    columns: [repo_name, activity_date, event_type]
+  - type: not_null
+    column: repo_name
+  - type: not_null
+    column: activity_date
+  - type: not_null
+    column: event_type
+  - type: row_count_between
+    min_rows: 1

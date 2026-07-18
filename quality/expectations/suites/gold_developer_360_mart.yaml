@@ -1,0 +1,11 @@
+table: gold/developer_360_mart
+layer: gold
+checks:
+  - type: unique
+    columns: [actor_login, activity_date]
+  - type: not_null
+    column: actor_login
+  - type: not_null
+    column: activity_date
+  - type: row_count_between
+    min_rows: 1

@@ -1,0 +1,15 @@
+# Bronze envelope invariants. event_key uniqueness is warn-severity only:
+# resent files legitimately duplicate ids at bronze; the raw vault dedupes.
+table: bronze/github_events
+layer: bronze
+checks:
+  - type: not_null
+    column: event_key
+  - type: unique
+    columns: [event_key]
+    severity: warn
+  - type: accepted_values
+    column: event_type
+    values: [PushEvent, PullRequestEvent, IssuesEvent, WatchEvent, ForkEvent, ReleaseEvent]
+  - type: row_count_between
+    min_rows: 1

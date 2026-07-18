@@ -1,0 +1,15 @@
+# Insert-only effectivity intervals: (lhk, start, end) identifies a version;
+# a closed row supersedes its open twin at query time (business vault).
+table: raw_vault/eff_sat_issue_assignee
+layer: silver
+checks:
+  - type: unique
+    columns: [lhk_issue_assignee, start_dts, end_dts]
+  - type: not_null
+    column: start_dts
+  - type: not_null
+    column: end_dts
+  - type: referential_integrity
+    column: hk_issue
+    ref_table: raw_vault/hub_issue
+    ref_column: hk_issue

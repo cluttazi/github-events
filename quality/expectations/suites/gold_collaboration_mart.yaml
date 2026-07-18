@@ -1,0 +1,13 @@
+table: gold/collaboration_mart
+layer: gold
+checks:
+  - type: unique
+    columns: [item_type, repo_name, item_number]
+  - type: not_null
+    column: item_type
+  - type: not_null
+    column: repo_name
+  - type: not_null
+    column: item_number
+  - type: row_count_between
+    min_rows: 1

@@ -20,6 +20,7 @@ from pipelines.common.config import LakehouseConfig
 from pipelines.gold.job import run_build as build_gold
 from pipelines.raw_vault.job import run_load
 from pipelines.raw_vault.loaders import table_path
+from quality.expectations.runner import run_suites
 from tests.conftest import make_config
 
 pytestmark = [pytest.mark.spark, pytest.mark.integration]
@@ -157,3 +158,20 @@ def test_business_vault_and_gold_build(
         )
         nulls = sum(df.filter(F.col(c).isNull()).count() for c in mart.grain)
         assert nulls == 0, f"{mart.name} has null grain keys"
+
+
+def test_dq_suites_all_pass(
+    spark: SparkSession, vault: tuple[LakehouseConfig, dict[str, int]]
+) -> None:
+    """Every declarative DQ suite passes over the freshly built lakehouse."""
+    config, _ = vault
+    build_business_vault(config, spark)
+    build_gold(config, spark)
+
+    results = run_suites(config, spark)
+    failures = {
+        result.table: [c.description for c in result.checks if not c.passed]
+        for result in results
+        if result.n_failed > 0
+    }
+    assert failures == {}

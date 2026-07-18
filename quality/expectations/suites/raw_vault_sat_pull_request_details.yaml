@@ -1,0 +1,11 @@
+table: raw_vault/sat_pull_request_details
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_pull_request, hash_diff]
+  - type: not_null
+    column: hk_pull_request
+  - type: not_null
+    column: hash_diff
+  - type: not_null
+    column: record_source

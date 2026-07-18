@@ -1,0 +1,21 @@
+# Hub<->link referential integrity is error severity: loaders write hubs
+# before links, so an orphaned key is a loader bug, not late data.
+table: raw_vault/link_actor_pull_request
+layer: silver
+checks:
+  - type: unique
+    columns: [lhk_actor_pull_request]
+  - type: not_null
+    column: lhk_actor_pull_request
+  - type: referential_integrity
+    column: hk_actor
+    ref_table: raw_vault/hub_actor
+    ref_column: hk_actor
+  - type: referential_integrity
+    column: hk_pull_request
+    ref_table: raw_vault/hub_pull_request
+    ref_column: hk_pull_request
+  - type: referential_integrity
+    column: hk_repo
+    ref_table: raw_vault/hub_repo
+    ref_column: hk_repo
