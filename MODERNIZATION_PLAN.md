@@ -73,4 +73,44 @@ this environment's proxy, so "latest" is from training knowledge, early 2026):
 
 ## 6. Done vs deferred
 
-(filled in at the end of the pass — see final section below)
+### Done
+
+- `docs:` this audit plan (baseline gate results + inventory).
+- `chore(dev-deps):` ruff `~=0.14.0` → `~=0.15.22`, mypy `~=1.15` → `~=2.3`,
+  pytest `~=8.3` → `~=9.1`; `uv.lock` re-resolved. Gates re-run after the
+  bump: `make lint` clean (ruff check + format, mypy strict 70 files),
+  `make test` 71/71 passing including all Spark suites.
+- `ci:` action majors bumped — `actions/checkout` v4→v5,
+  `actions/setup-java` v4→v5, `astral-sh/setup-uv` v5→v7,
+  `actions/upload-artifact` v4→v5. Workflow logic untouched; both files
+  YAML-validated. CI already mirrors every local gate (lint, mypy, contract
+  compat, governance drift, split pytest, terraform, offline bundle
+  validate, weekly `make demo`), so no gate additions were needed.
+
+### Deferred (with reasons)
+
+- **pyspark 4.2.0**: delta-spark 4.3.1 pins pyspark `<=4.1.1`; the CLAUDE.md
+  verified-pair rule forbids moving one side alone. Revisit when delta-spark
+  ships a release certified against Spark 4.2.
+- **faker 40.x** (from 37.12): runtime dependency behind the deterministic
+  event generators; a 3-major jump can change seeded output shapes.
+  Deserves its own pass with a demo re-baseline, not a light-touch bump.
+- **databricks/setup-cli@main**: floating pin is the upstream-documented
+  usage; left as-is.
+- **No code/bug fixes**: the audit found zero failing gates and no
+  hard-rule violations (hashing centralized, ANSI on, insert-only vault
+  verified by re-run, contracts/governance drift-free), so there was
+  nothing to fix without inventing work.
+
+## 7. Summary (PR-description style)
+
+Light-touch modernization pass. Baseline audit first: every repo gate —
+`uv sync`, `make lint`, `make test` (71/71), `make demo` (all 7 steps,
+idempotency proof included), `make vault-verify` (+0 rows everywhere),
+contract compat, governance render drift — was green before any change.
+Changes are strictly tooling: dev-tool constraint bumps (ruff 0.15 /
+mypy 2.3 / pytest 9.1, all gates re-verified green afterwards) and GitHub
+Actions major-version bumps in `ci.yml`/`demo.yml`. Runtime dependencies,
+pipelines, contracts, and governance artifacts are untouched; the
+pyspark 4.1.1 + delta-spark 4.3.1 verified pair is preserved per the
+repo's hard rules. Deferred items and reasons are recorded above.
