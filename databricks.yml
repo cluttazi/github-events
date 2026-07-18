@@ -1,0 +1,55 @@
+# Databricks Asset Bundle for the github-events lakehouse.
+#
+# The bundle packages the repo as a wheel (hatchling; see [project.scripts]
+# entry points in pyproject.toml) and runs the same modules the local demo
+# runs, chained with explicit layer dependencies:
+#   bronze -> raw vault (insert-only, idempotent) -> business vault -> gold -> DQ
+#
+# Runtime path targeting reuses the local-first design: every task sets
+# LAKEHOUSE_ROOT to a UC-volume/external-location path, so the code paths
+# are identical between laptop and workspace (ADR 005). Unity Catalog DDL
+# (catalogs/schemas/grants) is owned by platform/terraform — the bundle only
+# deploys compute + jobs.
+#
+# CI runs `databricks bundle validate -t dev`; deploys are always explicit
+# (`databricks bundle deploy -t dev|prod`), never automatic.
+
+bundle:
+  name: github-events-lakehouse
+
+include:
+  - platform/databricks/resources/*.yml
+
+artifacts:
+  wheel:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+variables:
+  lakehouse_root_path:
+    description: Storage root the pipeline reads/writes (UC volume or external location path).
+    default: /Volumes/github_events_dev_bronze/ops/lakehouse
+  node_type_id:
+    description: Worker node type for job clusters.
+    default: m6gd.large
+  spark_version:
+    description: Databricks Runtime version for job clusters.
+    default: 16.4.x-scala2.13
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://example.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://example.cloud.databricks.com
+      root_path: /Workspace/deploy/${bundle.name}/${bundle.target}
+    variables:
+      lakehouse_root_path: /Volumes/github_events_prod_bronze/ops/lakehouse
+    run_as:
+      service_principal_name: svc-vault

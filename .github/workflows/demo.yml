@@ -1,0 +1,39 @@
+# The strongest signal this repo can send: CI proves the README quickstart
+# actually works, end to end, from a clean clone — seeded events, bronze,
+# raw vault (with the idempotency proof), business vault, gold marts, DQ.
+name: demo-smoke
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1" # weekly: catch dependency/runtime rot
+  workflow_dispatch:
+
+jobs:
+  demo:
+    name: make demo (end-to-end)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - name: end-to-end demo
+        run: make demo EVENTS=500
+      - name: upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-run
+          path: |
+            data/run/**/logs/*.log
+            data/run/dq/*.json
+            data/reports/*.html
+          if-no-files-found: ignore

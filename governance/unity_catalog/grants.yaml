@@ -1,0 +1,50 @@
+# Unity Catalog privilege matrix — the reviewable source of truth.
+#
+# platform/terraform/unity_catalog.tf enforces this matrix; this file is the
+# audit/review artifact (diffable in PRs, rendered to the human-readable
+# access matrix by render.py). Drift between the two is a review failure.
+#
+# Principle: least privilege by layer.
+#   - analysts touch gold only; raw payloads and vault internals never reach them
+#   - engineers own bronze/silver mutation but are read-only consumers on gold
+#   - service principals get exactly the layer their pipeline writes
+
+principals:
+  - name: data-engineers
+    kind: group
+    description: Platform/data engineering team.
+  - name: analysts
+    kind: group
+    description: Business analytics; gold information marts only.
+  - name: svc-ingest
+    kind: service_principal
+    description: Runs the bronze copy-into batch load.
+  - name: svc-vault
+    kind: service_principal
+    description: Runs raw-vault and business-vault loads plus gold mart builds.
+
+grants:
+  - securable: catalog/bronze
+    principal: data-engineers
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]
+  - securable: catalog/silver
+    principal: data-engineers
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]
+  - securable: catalog/gold
+    principal: data-engineers
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]
+  - securable: catalog/gold
+    principal: analysts
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT]
+  - securable: catalog/bronze
+    principal: svc-ingest
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]
+  - securable: catalog/bronze
+    principal: svc-vault
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT]
+  - securable: catalog/silver
+    principal: svc-vault
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]
+  - securable: catalog/gold
+    principal: svc-vault
+    privileges: [USE_CATALOG, USE_SCHEMA, SELECT, MODIFY, CREATE_TABLE]

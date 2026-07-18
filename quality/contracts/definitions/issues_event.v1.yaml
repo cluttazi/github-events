@@ -1,0 +1,62 @@
+contract: issues_event
+version: 1
+owner: data-platform@github-events.example
+description: >
+  Flattened staged schema for GH-Archive IssuesEvent lines. Feeds hub_issue,
+  link_actor_issue, sat_issue_details, and — for assigned/unassigned actions —
+  link_issue_assignee with its effectivity satellite.
+primary_key: [event_id]
+event_time_field: created_at
+sla:
+  freshness_hours: 24
+fields:
+  - name: event_id
+    type: string
+    nullable: false
+  - name: actor_login
+    type: string
+    nullable: false
+    pii: true
+    pii_category: quasi_identifier
+  - name: actor_display_login
+    type: string
+    nullable: true
+    pii: true
+    pii_category: quasi_identifier
+    description: Actor display login; sat_actor_profile source.
+  - name: actor_avatar_url
+    type: string
+    nullable: true
+    pii: true
+    pii_category: quasi_identifier
+    description: Actor avatar URL; sat_actor_profile source.
+  - name: repo_name
+    type: string
+    nullable: false
+  - name: created_at
+    type: timestamp
+    nullable: false
+  - name: action
+    type: string
+    nullable: false
+    allowed_values: [opened, edited, closed, reopened, assigned, unassigned]
+  - name: issue_number
+    type: integer
+    nullable: false
+    description: Composite business key of hub_issue with repo_name.
+  - name: issue_title
+    type: string
+    nullable: true
+  - name: issue_state
+    type: string
+    nullable: true
+    allowed_values: [open, closed]
+  - name: issue_comments
+    type: integer
+    nullable: true
+  - name: assignee_login
+    type: string
+    nullable: true
+    pii: true
+    pii_category: quasi_identifier
+    description: Present on assigned/unassigned; drives the effectivity satellite.

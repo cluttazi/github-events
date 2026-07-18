@@ -1,0 +1,20 @@
+# The reconciliation gate: every valid bronze event is exactly one row of
+# the multi-active satellite (corrupt lines never left bronze quarantine;
+# contract-invalid rows sit in raw_vault/quarantine and would show as drift).
+table: raw_vault/sat_actor_repo_event
+layer: silver
+checks:
+  - type: unique
+    columns: [lhk_actor_repo, event_id]
+  - type: not_null
+    column: lhk_actor_repo
+  - type: not_null
+    column: event_id
+  - type: not_null
+    column: hash_diff
+  - type: referential_integrity
+    column: lhk_actor_repo
+    ref_table: raw_vault/link_actor_repo
+    ref_column: lhk_actor_repo
+  - type: row_count_match
+    ref_table: bronze/github_events

@@ -1,0 +1,9 @@
+table: raw_vault/hub_repo
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_repo]
+  - type: not_null
+    column: hk_repo
+  - type: not_null
+    column: repo_name

@@ -1,0 +1,11 @@
+table: raw_vault/hub_issue
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_issue]
+  - type: not_null
+    column: hk_issue
+  - type: not_null
+    column: repo_name
+  - type: not_null
+    column: issue_number

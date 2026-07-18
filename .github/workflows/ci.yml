@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1" # never silently re-resolve in CI; uv.lock is the truth
+
+jobs:
+  lint:
+    name: lint & type-check & generated-artifact drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - name: contract compatibility gate
+        run: uv run python -m quality.contracts.compat
+      - name: governance artifacts must match their sources
+        run: |
+          uv run python -m governance.unity_catalog.render
+          git diff --exit-code governance/unity_catalog/generated/
+
+  test-python:
+    name: pytest (unit + spark integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - name: non-spark tests (fast feedback)
+        run: uv run pytest -q -m "not spark"
+      - name: spark tests
+        run: uv run pytest -q -m spark
+
+  terraform:
+    name: terraform fmt & validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+      - working-directory: platform/terraform
+        run: terraform fmt -check -recursive
+      - working-directory: platform/terraform
+        run: terraform init -backend=false -input=false
+      - working-directory: platform/terraform
+        run: terraform validate
+
+  bundle:
+    name: databricks asset bundle validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: bundle validate (offline; no workspace call for schema checks)
+        env:
+          DATABRICKS_HOST: https://example.cloud.databricks.com
+          DATABRICKS_TOKEN: ci-placeholder
+        run: databricks bundle validate -t dev

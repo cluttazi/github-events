@@ -1,0 +1,11 @@
+table: raw_vault/hub_pull_request
+layer: silver
+checks:
+  - type: unique
+    columns: [hk_pull_request]
+  - type: not_null
+    column: hk_pull_request
+  - type: not_null
+    column: repo_name
+  - type: not_null
+    column: pr_number

@@ -1,0 +1,80 @@
+# The lakehouse job: one DAG, explicit layer dependencies.
+#
+# Every task is a python_wheel_task hitting a [project.scripts] entry point,
+# so the deployed job runs exactly the code `make demo` runs locally. The
+# raw_vault task runs with --verify-idempotent: the DV2.0 idempotency proof
+# executes on every scheduled run, not just in tests.
+
+resources:
+  jobs:
+    github_events_lakehouse:
+      name: github-events-lakehouse-${bundle.target}
+
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?" # daily 02:00 UTC, after GH-Archive hour files settle
+        timezone_id: UTC
+        pause_status: PAUSED # unpause per environment, deliberately
+
+      job_clusters:
+        - job_cluster_key: lakehouse_cluster
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 2
+            data_security_mode: SINGLE_USER
+            spark_env_vars:
+              LAKEHOUSE_ROOT: ${var.lakehouse_root_path}
+
+      tasks:
+        - task_key: bronze_copy_into
+          job_cluster_key: lakehouse_cluster
+          python_wheel_task:
+            package_name: github_events_lakehouse
+            entry_point: ghe-bronze
+          libraries:
+            - whl: ../../../dist/*.whl
+
+        - task_key: raw_vault_load
+          depends_on:
+            - task_key: bronze_copy_into
+          job_cluster_key: lakehouse_cluster
+          python_wheel_task:
+            package_name: github_events_lakehouse
+            entry_point: ghe-raw-vault
+            parameters: ["--verify-idempotent"]
+          libraries:
+            - whl: ../../../dist/*.whl
+
+        - task_key: business_vault_build
+          depends_on:
+            - task_key: raw_vault_load
+          job_cluster_key: lakehouse_cluster
+          python_wheel_task:
+            package_name: github_events_lakehouse
+            entry_point: ghe-business-vault
+          libraries:
+            - whl: ../../../dist/*.whl
+
+        - task_key: gold_marts
+          depends_on:
+            - task_key: business_vault_build
+          job_cluster_key: lakehouse_cluster
+          python_wheel_task:
+            package_name: github_events_lakehouse
+            entry_point: ghe-gold
+          libraries:
+            - whl: ../../../dist/*.whl
+
+        - task_key: data_quality
+          depends_on:
+            - task_key: gold_marts
+          job_cluster_key: lakehouse_cluster
+          python_wheel_task:
+            package_name: github_events_lakehouse
+            entry_point: ghe-dq
+          libraries:
+            - whl: ../../../dist/*.whl
+
+      tags:
+        project: github-events-lakehouse
+        layer_dag: bronze-rawvault-businessvault-gold-dq
