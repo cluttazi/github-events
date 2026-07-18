@@ -15,7 +15,9 @@ from pyspark.sql import functions as F
 
 from ingestion.github_archive.generator import GeneratorConfig, run_generator
 from pipelines.bronze.copy_into import events_table_path, run_copy_into
+from pipelines.business_vault.job import run_build as build_business_vault
 from pipelines.common.config import LakehouseConfig
+from pipelines.gold.job import run_build as build_gold
 from pipelines.raw_vault.job import run_load
 from pipelines.raw_vault.loaders import table_path
 from tests.conftest import make_config
@@ -135,3 +137,23 @@ def test_satellites_carry_mandatory_metadata(
         eff.columns
     )
     assert eff.count() > 0
+
+
+def test_business_vault_and_gold_build(
+    spark: SparkSession, vault: tuple[LakehouseConfig, dict[str, int]]
+) -> None:
+    """The derived layers build on the vault and hold their documented grains."""
+    config, _ = vault
+    bv_counts = build_business_vault(config, spark)
+    assert all(count > 0 for count in bv_counts.values()), bv_counts
+
+    gold_counts = build_gold(config, spark)
+    assert all(count > 0 for count in gold_counts.values()), gold_counts
+
+    for mart in config.marts:
+        df = spark.read.format("delta").load(table_path(config, "gold", mart.name))
+        assert df.count() == df.select(*mart.grain).distinct().count(), (
+            f"{mart.name} grain {mart.grain} is not unique"
+        )
+        nulls = sum(df.filter(F.col(c).isNull()).count() for c in mart.grain)
+        assert nulls == 0, f"{mart.name} has null grain keys"
