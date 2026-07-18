@@ -36,18 +36,24 @@ variables:
   spark_version:
     description: Databricks Runtime version for job clusters.
     default: 16.4.x-scala2.13
+  workspace_host:
+    description: >
+      Workspace URL. The default is a placeholder (no real workspace backs this
+      repo); CI overrides it with a local stub so `bundle validate` runs offline
+      (see platform/databricks/ci/workspace_stub.py).
+    default: https://example.cloud.databricks.com
 
 targets:
   dev:
     mode: development
     default: true
     workspace:
-      host: https://example.cloud.databricks.com
+      host: ${var.workspace_host}
 
   prod:
     mode: production
     workspace:
-      host: https://example.cloud.databricks.com
+      host: ${var.workspace_host}
       root_path: /Workspace/deploy/${bundle.name}/${bundle.target}
     variables:
       lakehouse_root_path: /Volumes/github_events_prod_bronze/ops/lakehouse
