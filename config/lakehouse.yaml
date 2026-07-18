@@ -1,0 +1,79 @@
+# Single runtime configuration for the github-events lakehouse.
+# Relative paths are anchored at the repo root (override with LAKEHOUSE_ROOT).
+#
+# The vault section declares the Data Vault 2.0 topology: it drives the
+# generic loaders in pipelines/raw_vault/loaders.py, the DQ suite targets,
+# and the object catalog docs. Column-level extraction specs live in
+# pipelines/raw_vault/staging.py.
+
+source:
+  landing_dir: data/landing/github
+
+storage:
+  lakehouse_root: data/lakehouse
+  run_dir: data/run
+  reports_dir: data/reports
+
+event_types:
+  - PushEvent
+  - PullRequestEvent
+  - IssuesEvent
+  - WatchEvent
+  - ForkEvent
+  - ReleaseEvent
+
+vault:
+  record_source_prefix: gharchive
+  hubs:
+    - name: hub_actor
+      business_keys: [actor_login]
+    - name: hub_repo
+      business_keys: [repo_name]
+    - name: hub_pull_request
+      business_keys: [repo_name, pr_number]
+    - name: hub_issue
+      business_keys: [repo_name, issue_number]
+  links:
+    - name: link_actor_repo
+      hubs: [hub_actor, hub_repo]
+    - name: link_actor_pull_request
+      hubs: [hub_actor, hub_pull_request, hub_repo]
+    - name: link_actor_issue
+      hubs: [hub_actor, hub_issue, hub_repo]
+    - name: link_issue_assignee
+      hubs: [hub_issue, hub_actor]
+      driving_key: hub_issue
+  satellites:
+    - name: sat_actor_profile
+      parent: hub_actor
+    - name: sat_repo_profile
+      parent: hub_repo
+    - name: sat_repo_stats
+      parent: hub_repo
+    - name: sat_pull_request_details
+      parent: hub_pull_request
+    - name: sat_issue_details
+      parent: hub_issue
+    - name: sat_actor_repo_event
+      parent: link_actor_repo
+      kind: multi_active
+      subsequence_key: event_id
+    - name: eff_sat_issue_assignee
+      parent: link_issue_assignee
+      kind: effectivity
+
+marts:
+  - name: repo_activity_mart
+    grain: [repo_name, activity_date, event_type]
+    pit: pit_repo_day
+  - name: developer_360_mart
+    grain: [actor_login, activity_date]
+    pit: pit_actor_day
+  - name: collaboration_mart
+    grain: [item_type, repo_name, item_number]
+    pit: pit_pull_request_day
+
+spark:
+  driver_memory: 3g
+  shuffle_partitions: 8
+  session_timezone: UTC
