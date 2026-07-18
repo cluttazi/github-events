@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Lakehouse local data (disposable; see make clean)
+data/
+spark-warehouse/
+metastore_db/
+derby.log
+dist/
